@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaList } from "react-icons/fa";
 import { useMutation, useQuery } from "@apollo/client";
-import { ADD_PROJECT } from "../queries/projectQueries";
+import { ADD_PROJECT } from "../mutations/projectMutations";
 import { GET_PROJECTS } from "../queries/projectQueries";
 import { GET_CLIENTS } from "../queries/clientQueries";
 
@@ -11,29 +11,25 @@ export default function AddClientModal() {
   const [clientId, setClientId] = useState("");
   const [status, setStatus] = useState("new");
 
-  //   GET CLIENTS FOR SELECT
+  const [addProject] = useMutation(ADD_PROJECT, {
+    variables: { name, description, clientId, status },
+    update(cache, { data: { addProject } }) {
+      const { projects } = cache.readQuery({ query: GET_PROJECTS });
+      cache.writeQuery({
+        query: GET_PROJECTS,
+        data: { projects: [...projects, addProject] },
+      });
+    },
+  });
 
   const { loading, error, data } = useQuery(GET_CLIENTS);
-
-  //   const [addClient] = useMutation(ADD_CLIENT, {
-  //     variables: { name, email, phone },
-  //     update(cache, { data: { addClient } }) {
-  //       const { clients } = cache.readQuery({
-  //         query: GET_CLIENTS,
-  //       });
-  //       cache.writeQuery({
-  //         query: GET_CLIENTS,
-  //         data: { clients: clients.concat([addClient]) },
-  //       });
-  //     },
-  //   });
 
   const onSubmit = (event) => {
     event.preventDefault();
     if (name === "" || description === "" || status === "") {
       return alert("Please Enter in all fields");
     }
-    // addProject(name, description, status);
+    addProject(name, description, clientId, status);
     setName("");
     setDescription("");
     setStatus("new");
